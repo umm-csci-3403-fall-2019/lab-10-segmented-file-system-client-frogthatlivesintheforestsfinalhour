@@ -44,4 +44,13 @@ public class Main {
 
     }
 
+    public boolean isHeaderPacket(DatagramPacket packet){
+        if(packet.getData()[0] % 2 == 0){
+            return true;
+        }
+        else{
+            return false;
+    }
+    }
+
 }
