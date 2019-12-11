@@ -1,12 +1,14 @@
 package segmentedfilesystem;
 
+import java.net.DatagramPacket;
+
 class GeneratePacketFactory{
-    public Packet generatePacket(int status, int ID, byte[] info, int packNum){
-        if(status % 2 == 0){
-            return new HeaderPacket(status, ID, info);
+    public Object generatePacket(DatagramPacket packet){
+        if(packet.getData()[0] % 2 == 0){
+            return new HeaderPacket(packet);
         }
         else{
-            return new DataPacket(status, ID, info, packNum);
+            return new DataPacket(packet);
         }
     }
 }
