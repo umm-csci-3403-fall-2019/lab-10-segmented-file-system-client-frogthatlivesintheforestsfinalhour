@@ -3,7 +3,7 @@ package segmentedfilesystem;
 import java.net.DatagramPacket;
 import java.util.Arrays;
 
-public class DataPacket{
+public class DataPacket extends Packet{
 
     private byte status;
     private byte fileID;
@@ -16,6 +16,7 @@ public class DataPacket{
         packetNumber[0] = packet.getData()[2];
         packetNumber[1] = packet.getData()[3];
         data = Arrays.copyOfRange(packet.getData(),4,packet.getLength());
+        isHeader = false;
     }
 
     public byte getStatusByte(){

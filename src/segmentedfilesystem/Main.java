@@ -4,6 +4,8 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Main {
     
@@ -17,9 +19,6 @@ public class Main {
             System.out.println("Usage: java Main <csci-4409.morris.umn.edu>");
             return;
         }*/
-
-        //array for the assembly of the final product (type DatagramPacket is subject to change)
-        ArrayList<DataPacket> finalResult = new ArrayList<DataPacket>(1);
         try {
             //socket connection to the server
             DatagramSocket socket = new DatagramSocket();
@@ -27,16 +26,39 @@ public class Main {
             packet = new DatagramPacket(sendBuf, sendBuf.length, address, port);
             socket.send(packet);
 
+            //array for the assembly of the final product (type DatagramPacket is subject to change)
+            ArrayList<DataPacket> datapacketCollection = new ArrayList<DataPacket>(1);
+            ArrayList<HeaderPacket> headerpacketCollection = new ArrayList<HeaderPacket>(1);
+
             //eventually we would like to place a while loop (maybe while there are still files not received yet?)
             //receiving the packet from the server
-            byte[] buf = new byte[1028];
-            DatagramPacket receivedPacket = new DatagramPacket();
-            socket.receive(receivedPacket);
-            finalResult.add(receivedPacket);
 
-            //Printing the data received for debugging purposes
-            String received = new String(receivedPacket.getData(), 0, receivedPacket.getDataLength());
-            System.out.println(received);
+            int loopTerminator = Integer.MAX_VALUE;
+            byte[] fileList = new byte[3];
+            while(0 < loopTerminator){
+                byte[] buf = new byte[1028];
+                DatagramPacket receivedPacket = new DatagramPacket(buf, buf.length);
+                socket.receive(receivedPacket);
+
+                Packet loopPacket = PacketFactory.getPacket(receivedPacket);
+
+                if(loopPacket.isHeader){
+                    headerpacketCollection.add((HeaderPacket) loopPacket);
+                }
+                else{
+                    datapacketCollection.add((DataPacket) loopPacket);
+                }
+
+                Map<Byte, Packet> fileMap = new HashMap<>();
+                fileMap.put(loopPacket.getFileID(), loopPacket);
+
+                assignToFile(loopPacket.getFileID(), fileList);
+
+                //Printing the data received for debugging purposes
+                String received = new String(loopPacket.getData(), 0, loopPacket.getDataLength());
+                System.out.println(received);
+            }
+
         }
         catch(Exception e){
             System.out.println(e);
@@ -44,13 +66,12 @@ public class Main {
 
     }
 
-    public boolean isHeaderPacket(DatagramPacket packet){
-        if(packet.getData()[0] % 2 == 0){
-            return true;
+    private static int assignToFile(byte fileID, byte[] fileList){
+        for (int i=0; i<fileList.length; i++){
+            if(fileList[i] == fileID){
+                return i;
+            }
         }
-        else{
-            return false;
-    }
     }
 
 }
