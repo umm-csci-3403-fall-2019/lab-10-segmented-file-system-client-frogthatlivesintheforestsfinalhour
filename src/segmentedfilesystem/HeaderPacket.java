@@ -15,16 +15,8 @@ public class HeaderPacket{
         data = Arrays.copyOfRange(packet.getData(),3,packet.getLength());
     }
 
-    public byte getStatusByte(){
-        return status;
-    }
-    public byte getFileID(){
-        return fileID;
-    }
-    public byte[] getData(){
-        return data;
-    }
-    public int getDataLength(){
-        return data.length;
-    }
+    public byte getStatusByte(){ return status; }
+    public byte getFileID(){ return fileID; }
+    public byte[] getData(){ return data; }
+    public int getDataLength(){ return data.length; }
 }
