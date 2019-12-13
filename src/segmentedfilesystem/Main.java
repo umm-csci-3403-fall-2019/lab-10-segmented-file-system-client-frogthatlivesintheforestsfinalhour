@@ -32,31 +32,62 @@ public class Main {
 
             //eventually we would like to place a while loop (maybe while there are still files not received yet?)
             //receiving the packet from the server
+            Map<Byte, Packet> fileMap = new HashMap<>();
 
             int loopTerminator = Integer.MAX_VALUE;
-            byte[] fileList = new byte[3];
-            while(0 < loopTerminator){
+            int countTill = 0;
+            int lastPacketCount = 0;
+            while(count < loopTerminator){
                 byte[] buf = new byte[1028];
                 DatagramPacket receivedPacket = new DatagramPacket(buf, buf.length);
                 socket.receive(receivedPacket);
 
                 Packet loopPacket = PacketFactory.getPacket(receivedPacket);
 
-                if(loopPacket.isHeader){
-                    headerpacketCollection.add((HeaderPacket) loopPacket);
-                }
-                else{
-                    datapacketCollection.add((DataPacket) loopPacket);
+//                if(loopPacket.isHeader){
+//                    headerpacketCollection.add((HeaderPacket) loopPacket);
+//                }
+//                else{
+//                    datapacketCollection.add((DataPacket) loopPacket);
+//                }
+                byte[] packNumCollect = new byte[]{ loopPacket.getData()[2], loopPacket.getData()[3] };
+                int packNum = ByteBuffer.wrap(packNumCollect).getShort();
+
+                if(loopPacket[0] % 2 == 1){
+                    //if it is a data packet, then we want to put the packet into the map with key = packet number
+                    fileMap.put(packNum, loopPacket);
                 }
 
-                Map<Byte, Packet> fileMap = new HashMap<>();
-                fileMap.put(loopPacket.getFileID(), loopPacket);
+                if(loopPacket[0] % 2 == 0){
+                    //if it is a header packet, we should put it into a separate key from the data packets
+                    fileMap.put(-1, loopPacket);
+                }
 
-                assignToFile(loopPacket.getFileID(), fileList);
+                if(loopPacket[0] % 4 == 3){
+                    lastPacketCount++;
+                    countTill = countTill + loopPacket.getPacketNumber();
+                }
+
+                if(lastPacketCount == 3){
+                    loopTerminator = countTill;
+                }
+                //assignToFile(loopPacket.getFileID(), fileList);
 
                 //Printing the data received for debugging purposes
                 String received = new String(loopPacket.getData(), 0, loopPacket.getDataLength());
                 System.out.println(received);
+
+                count++
+            }
+
+            String name = new String(fileMap.get(-1),2,fileMap.get(-1).length-2);
+            File file = new File(name);
+            OutputStream fileOutput = new FileOutputStream(file);
+            System.out.println(name);
+
+            for(int i = 0; i < loopTerminator; i++){
+                byte[] packetPlace = fileMap.get(i);
+                fileOutput.write(packet,4,packet.length-4)
             }
 
         }
@@ -66,12 +97,12 @@ public class Main {
 
     }
 
-    private static int assignToFile(byte fileID, byte[] fileList){
-        for (int i=0; i<fileList.length; i++){
-            if(fileList[i] == fileID){
-                return i;
-            }
-        }
-    }
+//    private static int assignToFile(byte fileID, byte[] fileList){
+//        for (int i=0; i<fileList.length; i++){
+//            if(fileList[i] == fileID){
+//                return i;
+//            }
+//        }
+//    }
 
 }
